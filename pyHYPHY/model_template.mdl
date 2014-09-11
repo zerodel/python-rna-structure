@@ -1,0 +1,107 @@
+Model_Name  		= "empiricalsnp60";
+Model_Options 		= 3;
+Model_Dimension 	= 61;
+Model_EFV_Type		= "Observed Nuc 3 params.";
+
+ModelMatrixDimension = 0;
+
+if (!ModelMatrixDimension)
+{
+	ModelMatrixDimension = 64;
+	for (h = 0 ;h<64; h=h+1)
+	{
+		if (_Genetic_Code[h]==10)
+		{
+			ModelMatrixDimension = ModelMatrixDimension-1;
+		}
+	}
+}
+function BuildCodonFrequencies (EFV)
+{
+	PIStop = 1.0;
+	result = {ModelMatrixDimension,1};
+	hshift = 0;
+	
+	/*if (Columns(EFV)==3)
+	{
+		for (h=0; h<4; h=h+1)
+		{
+			EFV[h][0] = (EFV[h][0]+EFV[h][1]+EFV[h][2])/3;
+		}
+	}*/
+
+	for (h=0; h<64; h=h+1)
+	{
+		first = h$16;
+		second = h%16$4;
+		third = h%4;
+		if (ModelGeneticCode[h]==10) 
+		{
+			hshift = hshift+1;
+			PIStop = PIStop-EFV[first][0]*EFV[second][0]*EFV[third][0];
+			continue; 
+		}
+		result[h-hshift][0]=EFV[first][0]*EFV[second][0]*EFV[third][0];
+	}
+	return result*(1.0/PIStop);
+} 
+
+
+
+function PopulateModelMatrix (ModelMatrixName&, EFV)
+{ 
+  if (!ModelMatrixDimension)
+     {
+		ModelMatrixDimension = 64;
+		for (h = 0 ;h<64; h=h+1)
+		{
+			if (ModelGeneticCode[h]==10)
+			{
+				ModelMatrixDimension = ModelMatrixDimension-1;
+			}
+		}
+	} 
+
+	if (Columns(EFV)==3)
+	{
+		for (h=0; h<4; h=h+1)
+		{
+			EFV[h][0] = (EFV[h][0]+EFV[h][1]+EFV[h][2])/3;
+		}
+	}
+	
+	ModelMatrixName = {ModelMatrixDimension,ModelMatrixDimension};  
+/*
+	for (h=0; h<ModelMatrixDimension; h=h+1)
+	{
+		for (v=0; v<ModelMatrixDimension; v=v+1)
+		{
+			if (h==v)
+			{
+			continue;
+			}
+			ModelMatrixName[h][v] := 0;
+		}
+		
+	}
+*/
+/*put your model here*/
+CUSTOM_MODEL_DEFINITION
+      
+
+
+
+
+return 1;
+}
+
+
+empiricalsnp60 = 0;
+
+vectorOfFrequencies = BuildCodonFrequencies (FEV);
+
+MULTIPLY_BY_FREQS = PopulateModelMatrix ("empiricalsnp60", FEV);
+
+FREQUENCY_SENSITIVE = 1;
+
+Model empircalmodel = (empiricalsnp60,vectorOfFrequencies,1);
