@@ -52,6 +52,7 @@ def get_snp_list(rnasnp_list, snp_location=0):
     single_base_mutations = map(lambda rnasnp_line: rnasnp_line.split()[snp_location], rnasnp_list)
     return single_base_mutations
 
+
 def codon_list_all(dna_base_list=gc.dna_base_list):
     """
     :param dna_base_list:
@@ -123,6 +124,10 @@ def rnasnp_built_cpd(list_rnasnp, head_list_rnasnp, sequence_string, list_codon=
     Changelog:
     if the sequence_string contains "U",  that is ,  mRNA sequence,  error would happen
     add site information into these CPD
+
+    2014-09-11: previous edition ignored the p-value ,
+    use 0.1 as a threshold for p-value .
+
     """
     if "U" in sequence_string:
         trans_reverse = string.maketrans("U", "T")
@@ -130,18 +135,23 @@ def rnasnp_built_cpd(list_rnasnp, head_list_rnasnp, sequence_string, list_codon=
 
     dict_codon_pair = init_codon_pair_dict(list_codon)
     data_position = get_position_data_in_record(head_list_rnasnp, "d_max")
+    # define a p-value position and a threshold for p-value
+    p_value_threshold = 0.1
+    p_value_pos = -1
+
     for record in list_rnasnp:
         list_row = record.split()
         snp_record = list_row[0]
         snp_site = int(snp_record[1:-1])
         data_record = list_row[data_position]
+        p_value = list_row[p_value_pos]
         codon_origin = get_snp_codon_origin(snp_record, sequence_string)
         codon_target = get_snp_codon_target(snp_record, sequence_string)
         if "N" in codon_origin or "N" in codon_target:
                 continue
         if codon_origin in gc.codon_terminator or codon_target in gc.codon_terminator:
                 continue
-        elif len(data_record) > 0:
+        elif len(data_record) > 0 and p_value < p_value_threshold:
             dict_codon_pair[(codon_origin, codon_target)].append((data_record, snp_site))  # worth mention here
     return dict_codon_pair
 
@@ -641,6 +651,26 @@ def is_synonymous(codon_codon_pair):
     codon1 = codon_codon_pair[0:3]
     codon2 = codon_codon_pair[4:]
     return gc.codon_aa_dict[codon1] == gc.codon_aa_dict[codon2]
+
+
+def mutation_one_site(single_base, position):
+    """
+    produce list of single site mutations with length 3.
+    :param single_base: single nucleic acid base, within {A,G,T,C}
+    :param position: the position of mutation in the sequence
+    :return: a list of mutation in one site, like A3G , 3 indicate the position
+    """
+    dna_nt_4 = ('A', 'C', 'G', 'T')
+    # output_list = []
+    # for nt in dna_nt_4:
+    #     if not single_base == nt:
+    #         output_list.append("".join([single_base, str(position), nt]))
+
+    # a "smarter" way to solve it
+    output_list = ["".join([single_base, str(position), nt]) for nt in dna_nt_4 if not single_base == nt]
+    return output_list
+
+
 
 #####---------------------------------------------------------------------------
 ####################################################################

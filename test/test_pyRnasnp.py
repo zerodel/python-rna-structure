@@ -5,23 +5,6 @@ import unittest
 import pyRNAsnp.pyRNAsnp as RNAsnp
 
 
-def mutation_one_site(single_base, position):
-    """
-    produce list of single site mutations with length 3.
-    :param single_base: single nucleic acid base, within {A,G,T,C}
-    :param position: the position of mutation in the sequence
-    :return: a list of mutation in one site, like A3G , 3 indicate the position
-    """
-    dna_nt_4 = ('A', 'C', 'G', 'T')
-    # output_list = []
-    # for nt in dna_nt_4:
-    #     if not single_base == nt:
-    #         output_list.append("".join([single_base, str(position), nt]))
-
-    # a "smarter" way to solve it
-    output_list = ["".join([single_base, str(position), nt]) for nt in dna_nt_4 if not single_base == nt]
-    return output_list
-
 
 
 class MyTestCase(unittest.TestCase):
@@ -39,7 +22,7 @@ class MyTestCase(unittest.TestCase):
         mutation1 = "A"
         pos = 2
         snps_in_mind = ["A2G", "A2C", "A2T"]
-        snp_output = mutation_one_site(mutation1, pos)
+        snp_output = RNAsnp.mutation_one_site(mutation1, pos)
         print str(snp_output)
         for snp in snps_in_mind:
             self.assertIn(snp, snp_output)
@@ -61,7 +44,7 @@ class MyTestCase(unittest.TestCase):
 
             snps = []
             for index_nt, nt in enumerate(seq_given):
-                snps.extend(mutation_one_site(nt, index_nt+1))
+                snps.extend(RNAsnp.mutation_one_site(nt, index_nt+1))
 
             snp_faker.write("\n".join(snps))
 
@@ -95,7 +78,8 @@ class MyTestCase(unittest.TestCase):
 
 
 
-
+    def test_rnasnp_built_cpd(self):
+        pass
 
 
 
