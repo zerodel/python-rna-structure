@@ -79,8 +79,21 @@ class MyTestCase(unittest.TestCase):
 
 
     def test_rnasnp_built_cpd(self):
-        pass
+        """
+        check the performance after a filter added
+        :return:
+        """
+        snp_file_name = "./snp_line.rnasnp"
+        rnasnp_list, rnasnp_list_head = RNAsnp.rnasnp_extractor(snp_file_name)
+        print len(rnasnp_list)
+        seq_rebuilt = RNAsnp.rebuild_seq(snp_file_name)
+        print seq_rebuilt
+        # rnasnp_built_cpd(list_rnasnp, head_list_rnasnp, sequence_string, list_codon=gc.codon_list):
+        codon_pair = RNAsnp.rnasnp_built_cpd(rnasnp_list, rnasnp_list_head, seq_rebuilt)
 
+        for key1 in codon_pair.keys():
+            if codon_pair[key1]:
+                print key1, str(codon_pair[key1])
 
 
 

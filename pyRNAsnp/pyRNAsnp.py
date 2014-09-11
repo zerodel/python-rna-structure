@@ -144,7 +144,7 @@ def rnasnp_built_cpd(list_rnasnp, head_list_rnasnp, sequence_string, list_codon=
         snp_record = list_row[0]
         snp_site = int(snp_record[1:-1])
         data_record = list_row[data_position]
-        p_value = list_row[p_value_pos]
+        p_value = float(list_row[p_value_pos])
         codon_origin = get_snp_codon_origin(snp_record, sequence_string)
         codon_target = get_snp_codon_target(snp_record, sequence_string)
         if "N" in codon_origin or "N" in codon_target:

@@ -48,7 +48,12 @@ def degenerate(gtr_nested_file, gtr_mdl_file):
 
 def nest_export(gtr_mdl, gtr_nested, CCL_file):
     """
+    export a nested model, need a file contains the classic gtr model , and a file contains CCL file
+
     Args:
+    gtr_mdl : file name of existing gtr model
+    gtr_nested : file name for output nested model
+    CCL_file : a file contains list of codon-codon pairs , which assigned the psi parameter
 
     Return:
 
