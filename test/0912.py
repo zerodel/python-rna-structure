@@ -28,7 +28,7 @@ def check_aln_files():
 
     max_num = max(aln_gene_num)
     aln_full_gene = []
-    for indexI,aln in enumerate(all_alns):
+    for indexI, aln in enumerate(all_alns):
         if aln_gene_num[indexI] == max(aln_gene_num):
             aln_full_gene.append(all_alns[indexI])
 
