@@ -3,13 +3,13 @@ __author__ = 'root'
 import unittest
 
 import pyRNAsnp.pyRNAsnp as RNAsnp
-
-
+import pyHYPHY.DataHYPHY as DataHyPHY
+import os
+import os.path
 
 
 class MyTestCase(unittest.TestCase):
     def test_something(self):
-        print "hello world"
         self.assertEqual(True, True)
 
 
@@ -23,7 +23,6 @@ class MyTestCase(unittest.TestCase):
         pos = 2
         snps_in_mind = ["A2G", "A2C", "A2T"]
         snp_output = RNAsnp.mutation_one_site(mutation1, pos)
-        print str(snp_output)
         for snp in snps_in_mind:
             self.assertIn(snp, snp_output)
 
@@ -85,15 +84,16 @@ class MyTestCase(unittest.TestCase):
         """
         snp_file_name = "./snp_line.rnasnp"
         rnasnp_list, rnasnp_list_head = RNAsnp.rnasnp_extractor(snp_file_name)
-        print len(rnasnp_list)
+
         seq_rebuilt = RNAsnp.rebuild_seq(snp_file_name)
-        print seq_rebuilt
+
         # rnasnp_built_cpd(list_rnasnp, head_list_rnasnp, sequence_string, list_codon=gc.codon_list):
         codon_pair = RNAsnp.rnasnp_built_cpd(rnasnp_list, rnasnp_list_head, seq_rebuilt)
 
         for key1 in codon_pair.keys():
             if codon_pair[key1]:
                 print key1, str(codon_pair[key1])
+
 
 
 

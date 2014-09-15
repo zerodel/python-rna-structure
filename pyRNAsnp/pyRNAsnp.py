@@ -249,7 +249,7 @@ def get_snp_codon_target(snp_record, string_sequence):
     return codon_target
 
 
-def print_codon(dict_data_codon_pair, codon_str, filename_data, site_num=-1):
+def print_codon(dict_data_codon_pair, codon_str_with_direction, filename_data, site_num=-1):
     """
         Description: 
            write all the data(in CPD) of the specified codon (with the name of Codon) to file( filename_data)
@@ -267,7 +267,7 @@ def print_codon(dict_data_codon_pair, codon_str, filename_data, site_num=-1):
         Changelog:
         
     """
-    list_codon_string = list(codon_str)
+    list_codon_string = list(codon_str_with_direction)
     # check codon substitution direction .
     if list_codon_string[0] == '_' and list_codon_string[-1] != '_':
         position_in_tuple = 1
@@ -418,7 +418,7 @@ def snp_dir_traversal(rnasnp_files, rnasnp_folder_name, output_folder="", is_dis
          
             with open(seq_file_name, "w") as seq_file:
                 if seq_file:
-                    fasta_head = "> rebuild sequence - "
+                    fasta_head = "> rebuild sequence - \n"
                     seq_file.write(fasta_head)
                     seq_file.write(seq_string)
             
@@ -441,7 +441,7 @@ def snp_dir_traversal(rnasnp_files, rnasnp_folder_name, output_folder="", is_dis
     print "total sequences number that contains N is ", num_seqn
     return None
 
-def cpd_dir_traversal(codon_str, cpd_dir, output_dir, site_num=-1):
+def cpd_dir_traversal(codon_str_with_direction, cpd_dir, output_dir, site_num=-1):
     """
     collect "codon_name" data from "cpd_dir" and output to "output_dir"
     Arguments:
@@ -454,7 +454,7 @@ def cpd_dir_traversal(codon_str, cpd_dir, output_dir, site_num=-1):
     # get the list of .cpd files
     files_cpd = [cpd_file for cpd_file in files_in_cpd_dir if os.path.splitext(cpd_file)[1] == ".cpd"]
     # set the codon name,  get the Codon_str and position_in_tuple
-    list_codon_triplet = list(codon_str)
+    list_codon_triplet = list(codon_str_with_direction)
     if list_codon_triplet[0] == '_' and list_codon_triplet[-1] != '_':  # check codon substitution direction
         position_in_tuple = 1
         codon_str = ''.join(list_codon_triplet[1:])
@@ -462,7 +462,7 @@ def cpd_dir_traversal(codon_str, cpd_dir, output_dir, site_num=-1):
         position_in_tuple = 0
         codon_str = ''.join(list_codon_triplet[:-1])
     else:
-        print "error: wrong codon string"
+        print "error: wrong codon string...."
         return None
     # initialize the main CPD dict
     cpd_main = init_codon_pair_dict(list_triple_base=gc.codon_list)
@@ -478,7 +478,7 @@ def cpd_dir_traversal(codon_str, cpd_dir, output_dir, site_num=-1):
                 cpd_main[Codon_key].extend(cpd_temp[Codon_key])
     # write main CPD to the output file .
     filename_data = os.path.join(output_dir, codon_str + ".lst")
-    filename_data = print_codon(cpd_main, codon_str, filename_data, site_num)
+    filename_data = print_codon(cpd_main, codon_str_with_direction, filename_data, site_num)
     return cpd_main
 
 
@@ -669,6 +669,35 @@ def mutation_one_site(single_base, position):
     # a "smarter" way to solve it
     output_list = ["".join([single_base, str(position), nt]) for nt in dna_nt_4 if not single_base == nt]
     return output_list
+
+def group_divide(path_to_codon, divided_file):
+    lst_files = [file1 for file1 in os.listdir(path_to_codon) if file1[-4:] == ".lst"]
+
+    c2c = []
+    for codon_1 in lst_files:
+        # some file operation for one file
+        single_codon_c2c = []
+        codonpair = []
+        sum_mutation = []
+        with open(os.path.join(path_to_codon, codon_1), "r") as read_c2:
+            for line in read_c2:
+
+                line_content = line.split()
+                codonpair.append(line_content.pop(0))
+                sum_mutation.append(len(line_content))
+
+        sum_all_muation_one_codon = sum(sum_mutation)
+        threshold_muation = sum_all_muation_one_codon/2
+        while sum_all_muation_one_codon > threshold_muation:
+            index_biggest = sum_mutation.index(max(sum_mutation))
+            single_codon_c2c.append(codonpair.pop(index_biggest))
+            sum_mutation.pop(index_biggest)
+            sum_all_muation_one_codon = sum(sum_mutation)
+
+        c2c.extend(single_codon_c2c)
+
+    with open(divided_file, "w") as writer:
+        writer.write("\t".join(c2c))
 
 
 
