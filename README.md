@@ -24,6 +24,7 @@ pyRNAsnp 文件夹
 ----
 
 里面包括了一些从.rnasnp 文件中抓取数据的函数。
+- pyRNAsnp/pyRNAsnp.py ： 抓取.rnasnp 数据
 
 
 pyHYPHY 文件夹
@@ -38,3 +39,6 @@ pyHYPHY 文件夹
 - pyHYPHY/SpeciesSpecificTree.py ： 进化树的new-ick string 相关的一些函数。
 — pyHYPHY/*.bf : batch file 的模板
 
+test 文件夹
+----
+里面是每天为了一些功能所写的代码片段
