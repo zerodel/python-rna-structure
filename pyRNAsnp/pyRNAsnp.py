@@ -288,20 +288,14 @@ def print_codon(dict_data_codon_pair, codon_str_with_direction, filename_data, s
                 data_content = [x[0] for x in dict_data_codon_pair[Codon_key]]
             elif site_num > 0:
                 data_content = [x[0] for x in dict_data_codon_pair[Codon_key] if x[1] < site_num]
-                codon_content = str(Codon_key[0]) + "_" + str(Codon_key[1])
-                file_line = codon_content + " " + " ".join(data_content)
-                data_write_to_file.append(file_line)
+            codon_content = str(Codon_key[0]) + "_" + str(Codon_key[1])
+            file_line = codon_content + " " + " ".join(data_content)
+            data_write_to_file.append(file_line)
 
     file_content = '\n'.join(data_write_to_file)
-    try:
-        file_handler = open(filename_data, 'w+')
-    except Exception, e:
-        print "Error in opening file "
-        return str(e)
-    else:
+
+    with open(filename_data, "w+") as file_handler:
         file_handler.writelines(file_content)
-    finally:
-        file_handler.close()
     return filename_data
 
 
@@ -390,7 +384,10 @@ def snp_dir_list(rnasnp_output_path):
 
 def snp_dir_traversal(rnasnp_files, rnasnp_folder_name, output_folder="", is_display_progress=False, is_force_update=True):
     """
-    do a traversal over .rnasnp files' folder. to each .rnasnp file, build a cpd structure and dump it to .cpd file.
+    do a traversal over .rnasnp files' folder.
+
+    for each .rnasnp file in rnasnp_folder_name,
+    build a cpd structure and dump it to .cpd file in output_folder.
 
     Arguments:
     - `rnasnp_folder_name`:
@@ -440,6 +437,7 @@ def snp_dir_traversal(rnasnp_files, rnasnp_folder_name, output_folder="", is_dis
                         print single_rnasnp_file, "=====",  seq_file_name, "----", cpd_file_name
     print "total sequences number that contains N is ", num_seqn
     return None
+
 
 def cpd_dir_traversal(codon_str_with_direction, cpd_dir, output_dir, site_num=-1):
     """
@@ -669,6 +667,7 @@ def mutation_one_site(single_base, position):
     # a "smarter" way to solve it
     output_list = ["".join([single_base, str(position), nt]) for nt in dna_nt_4 if not single_base == nt]
     return output_list
+
 
 def group_divide(path_to_codon, divided_file):
     lst_files = [file1 for file1 in os.listdir(path_to_codon) if file1[-4:] == ".lst"]

@@ -94,6 +94,5 @@ def transfer_for_r(modelname, mid, paras, path_working):
     return gene_index
 
 
-
 if __name__ == "__main__":
     pass

@@ -15,6 +15,7 @@ import pickle
 
 __author__ = 'zerodel'
 
+
 def test_cpd():
     cpd_path_name = "/home/zerodel/Workspace/cpd_store_site"
 

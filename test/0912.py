@@ -87,7 +87,7 @@ def built_model():
     matrixh.degenerate(gu_model_file,
                        rebuild_model_file)
 
-    matrixh.nest_export(rebuild_model_file,nested_model_file,cc_significant_file_path)
+    matrixh.nest_export(rebuild_model_file, nested_model_file, cc_significant_file_path)
 
 
     #
