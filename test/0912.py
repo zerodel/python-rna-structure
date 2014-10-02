@@ -32,7 +32,7 @@ def check_aln_files():
         if aln_gene_num[indexI] == max(aln_gene_num):
             aln_full_gene.append(all_alns[indexI])
 
-    print "fulllength has", len(aln_full_gene), "with " , str(max_num), "genes"
+    print "fulllength has", len(aln_full_gene), "with ", str(max_num), "genes"
 
 
 def test_group_divide():

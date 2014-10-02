@@ -18,8 +18,19 @@ class NotConsistentLength(Exception):
     """
     pass
 
+def get_gene_id_sequnce_from_lst(lst_file):
+    with open(lst_file, "r") as lst_fecther:
+        line1 =lst_fecther.readline()
+        lst_lines = lst_fecther.readlines()
 
-def file_extract(file_name):
+    geneids = [line.split()[0] for line in lst_lines]
+    return geneids
+
+def get_gene_id(line, model_name):
+    return line.split(":")[0].split(".")[0][: - len(model_name)]
+
+
+def file_extract(file_name, model_name):
     """
     read from para/*.txt and return gene_id and parameter value from string like
     "b4200nest.result:w=0.173206"
@@ -29,7 +40,7 @@ def file_extract(file_name):
     with open(file_name, "r") as reader:
         contents = reader.readlines()
 
-    gene_ids = [line[:5] for line in contents]
+    gene_ids = [get_gene_id(line, model_name) for line in contents]
     if "=" in contents[-1]:
         para_values = [line.split("=")[-1] for line in contents]
     else:
@@ -49,10 +60,10 @@ def data_grab(model_name, mid, para_list, folder_path):
     """
     gene_index_matrix = []
     para_matrix = []
-    para_name = ["gene_id"]
+    para_name = ["geneid"]
     for para in para_list:
         file_name_tmp = os.path.join(folder_path, model_name + mid + para + ".txt")
-        gene_index, para_content = file_extract(file_name_tmp)
+        gene_index, para_content = file_extract(file_name_tmp, model_name)
 
         para_name.append(para)
         gene_index_matrix.append(gene_index)
@@ -92,6 +103,45 @@ def transfer_for_r(modelname, mid, paras, path_working):
             writer.write(data_line)
 
     return gene_index
+
+
+def extract_parameter(result_path, para_path, list_model, list_parameter, mid=""):
+    #use grep to get parameters from .result files
+    dir_now = os.path.abspath(os.curdir)
+
+    os.chdir(result_path)
+
+    for para in list_parameter:
+            for model in list_model:
+                system_order = "grep -i " + para + " *" + model + ".result >" + os.path.join(para_path, "".join([model, mid, para, ".txt"]))
+                os.system(system_order)
+
+    os.chdir(dir_now)
+
+
+def test_gene_species_match(aln_file_path, list_gene_given):
+    aln_files = [single_file for single_file in os.listdir(aln_file_path) if ".aln" == single_file[-4:]]
+    num_not_match = 0
+    genes_matched = []
+    print "there are ", str(len(aln_files)), "genes here"
+    for file_aln_1 in aln_files:
+        full_path = os.path.join(aln_file_path, file_aln_1)
+        with open(full_path, "r") as reader:
+            contents = reader.readlines()
+            species = [line.split()[0].strip() for line in contents]
+        match_newick_species = True
+        for single_species in species:
+            if not single_species in list_gene_given:
+                print "some gene not match in ", file_aln_1
+                match_newick_species = False
+
+        if match_newick_species:
+            print file_aln_1, "--- matched !"
+            genes_matched.append(file_aln_1.split(".")[0])
+        else:
+            num_not_match += 1
+
+    print "In summary , ", str(num_not_match), "genes unmatch"
 
 
 if __name__ == "__main__":

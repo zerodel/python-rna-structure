@@ -46,7 +46,7 @@ def degenerate(gtr_nested_file, gtr_mdl_file):
         model_w.write(model_rebuilt)
 
 
-def nest_export(gtr_mdl, gtr_nested, CCL_file):
+def nest_export(gtr_mdl, gtr_nested, ccl_file):
     """
     export a nested model, need a file contains the classic gtr model , and a file contains CCL file
 
@@ -65,7 +65,7 @@ def nest_export(gtr_mdl, gtr_nested, CCL_file):
 
     psi_in_model = 0
     end_of_line = 0
-    mp = pyMH.ModelHYPHY(lst_2_tuple_file_name=CCL_file)
+    mp = pyMH.ModelHYPHY(lst_2_tuple_file_name=ccl_file)
     rebuilt_lines = []
 
     for line_num, line in enumerate(model_gu):

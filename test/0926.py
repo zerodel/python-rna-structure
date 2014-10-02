@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # author : Zerodel
 # Readme: move into yeast ....
-#
+# this file contains whole work flow of analysis a model species . from making model , to write all batch files
 
 import os
 import os.path
@@ -49,31 +49,29 @@ def make_model():
     matrixh.nest_export(rebuild_model_file, nested_model_file, cc_significant_file_path)
 
 
-
-
-def test_gene_species_name():
-    aln_files = [single_file for single_file in os.listdir(file_yeast_aln_path) if ".aln" == single_file[-4:]]
+def test_gene_species_match(aln_file_path, list_gene_given):
+    aln_files = [single_file for single_file in os.listdir(aln_file_path) if ".aln" == single_file[-4:]]
     num_not_match = 0
-    genes_for_7 = []
+    genes_matched = []
     print "there are ", str(len(aln_files)), "genes here"
     for file_aln_1 in aln_files:
         full_path = os.path.join(file_yeast_aln_path, file_aln_1)
         with open(full_path, "r") as reader:
             contents = reader.readlines()
             species = [line.split()[0].strip() for line in contents]
-        is_7 = True
+        match_newick_species = True
         for single_species in species:
-            if not single_species in list_yeast_species:
+            if not single_species in list_gene_given:
                 print "some gene not match in ", file_aln_1
-                is_7 = False
+                match_newick_species = False
 
-        if is_7:
-            print file_aln_1, "has 7 !"
-            genes_for_7.append(file_aln_1.split(".")[0])
+        if match_newick_species:
+            print file_aln_1, "--- matched !"
+            genes_matched.append(file_aln_1.split(".")[0])
         else:
             num_not_match += 1
 
-    print "In summary , ", str(num_not_match), "genes has less than 7 species"
+    print "In summary , ", str(num_not_match), "genes unmatch"
 
 
 def make_bf():
