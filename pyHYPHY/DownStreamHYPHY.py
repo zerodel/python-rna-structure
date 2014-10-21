@@ -18,15 +18,42 @@ class NotConsistentLength(Exception):
     """
     pass
 
+class WrongFileTypeForGapCheck(Exception):
+    """
+:exception
+    :raise when given wrong file type
+    """
+    pass
+
+class idSequenceUnKnow(Exception):
+    """
+    :raise when gene id sequence is fixed
+    """
+    pass
+
 def get_gene_id_sequnce_from_lst(lst_file):
+    """
+    get gene_id from .lst file .
+    .lst file was generated from grep procedure.
+    So the sequence differs from gene_id generated from native Python os.listdir()
+    :param lst_file:
+    :return:
+    """
     with open(lst_file, "r") as lst_fecther:
-        line1 =lst_fecther.readline()
+        line1 = lst_fecther.readline()
         lst_lines = lst_fecther.readlines()
 
     geneids = [line.split()[0] for line in lst_lines]
     return geneids
 
+
 def get_gene_id(line, model_name):
+    """
+    extract gene id information from grep result of .result file.
+    :param line:
+    :param model_name:
+    :return:
+    """
     return line.split(":")[0].split(".")[0][: - len(model_name)]
 
 
@@ -143,6 +170,132 @@ def test_gene_species_match(aln_file_path, list_gene_given):
 
     print "In summary , ", str(num_not_match), "genes unmatch"
 
+def gap_counting_aln(alignment_file):
+    with open(alignment_file, "r") as reader:
+        content = reader.readlines()
+
+    genes = [gene.split()[-1] for gene in content]
+    full_nt = 0
+    num_gap = 0
+    for gene in genes:
+        num_gap += gene.strip().count("-")
+        full_nt += len(gene.strip())
+
+    return num_gap, full_nt
+
+
+def gap_counting_input(inputfile_hyphy):
+    with open(inputfile_hyphy, "r") as reader:
+        genes = reader.readlines()[1::2]
+    full_nt = 0
+    num_gap = 0
+    for gene in genes:
+        num_gap += gene.strip().count("-")
+        full_nt += len(gene.strip())
+
+    return num_gap, full_nt
+
+def sum_available_sites(input_file_hyphy):
+
+    if ".input" == os.path.splitext(input_file_hyphy)[-1]:
+    # if input file is .input
+        with open(input_file_hyphy, "r") as hyphy_input:
+            genes = hyphy_input.readlines()[1::2]
+
+        genes_no_tail = [gene.strip() for gene in genes]
+
+    # if use .aln file
+    elif ".aln" == os.path.splitext(input_file_hyphy)[-1]:
+        with open(input_file_hyphy, "r") as reader:
+            content = reader.readlines()
+
+        genes_no_tail = [gene.split()[-1].strip() for gene in content]
+
+    else:
+        raise WrongFileTypeForGapCheck
+
+    gene_ref = genes_no_tail[0]
+    full_length = 0
+    available_sites = 0
+
+    for index, nt in enumerate(gene_ref):
+        volume_matrix  = [gene[index] for gene in genes_no_tail]
+
+        full_length += 1
+        if not "-" in volume_matrix: # no gap in current site
+            available_sites += 1
+
+    return available_sites, full_length
+
+def gap_check_traversal(input_folder, output_file, given_sequence_file="", jobids=[]):
+    """
+    check gap proportion on all files in "input_folder", and export as lst file to "output_file"
+    with (optional) given_sequence_file
+
+    :param input_folder:
+    :param output_file:
+    :param given_sequence:
+    :return:
+    """
+    curdir_abs = os.path.abspath(os.curdir)
+
+    if given_sequence_file:
+        jobids = get_gene_id_sequnce_from_lst(given_sequence_file)
+    elif jobids:
+        pass
+    else:
+        raise idSequenceUnKnow
+        #jobids = sorted([file_input for file_input in os.listdir(input_folder) if ".input" == os.path.splitext(file_input)[-1]])
+
+    with open(output_file, "w") as writer:
+        writer.write("geneid\tgaps\tfull\n")
+        for jobid in jobids:
+            input_name = os.path.join(input_folder, jobid + ".input")
+            aln_name = os.path.join(input_folder, jobid + ".aln")
+            if os.path.exists(input_name):
+                num_gap, full_nt_length = gap_counting_input(input_name)
+            elif os.path.exists(aln_name):
+                num_gap, full_nt_length = gap_counting_input(aln_name)
+            else:
+                raise WrongFileTypeForGapCheck
+            writer.write("%s\t%s\t%s\n" % (jobid, str(num_gap), str(full_nt_length)))
+
+    os.chdir(curdir_abs)
+
+def report_traversal_available_site(input_folder, output_file, given_sequence_file="", jobids=[]):
+    """
+    check available sites  proportion on all files in "input_folder", and export as lst file to "output_file"
+    with (optional) given_sequence_file
+
+    :param input_folder:
+    :param output_file:
+    :param given_sequence:
+    :return:
+    """
+    curdir_abs = os.path.abspath(os.curdir)
+
+    if given_sequence_file:
+        jobids = get_gene_id_sequnce_from_lst(given_sequence_file)
+    elif jobids:
+        pass
+    else:
+        raise idSequenceUnKnow
+        #jobids = sorted([file_input for file_input in os.listdir(input_folder) if ".input" == os.path.splitext(file_input)[-1]])
+
+    with open(output_file, "w") as writer:
+        writer.write("geneID\tavailableSites\tfullLength\n")
+        for jobid in jobids:
+            input_name = os.path.join(input_folder, jobid + ".input")
+            aln_name = os.path.join(input_folder, jobid + ".aln")
+            if os.path.exists(input_name):
+                num_no_gap, full_nt_length = sum_available_sites(input_name)
+            elif os.path.exists(aln_name):
+                num_no_gap, full_nt_length = sum_available_sites(aln_name)
+            else:
+                raise WrongFileTypeForGapCheck
+            writer.write("%s\t%s\t%s\n" % (jobid, str(num_no_gap), str(full_nt_length)))
+
+    os.chdir(curdir_abs)
 
 if __name__ == "__main__":
     pass

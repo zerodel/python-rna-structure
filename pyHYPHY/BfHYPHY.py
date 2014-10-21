@@ -61,6 +61,9 @@ class HYPHYBatchFile(object):
         self.use_given_tree = True
         self.tree_definition_external = newick_string
 
+    # def set_partition(self, partition_given):
+    #     self.partition = partition_given
+
     # get a matrix name from your mdl definition
     def get_matrix_name(self, mdl_file):
         """ read a .mdl file and return ONE matrix name or a matrix name list

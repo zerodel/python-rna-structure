@@ -1,0 +1,2 @@
+geneID	availableSites	fullLength
+tmp	3	4

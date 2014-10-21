@@ -5,6 +5,15 @@ input file preparation of HYPHY
 __author__ = 'Zerodel_2'
 
 
+class sequenceNotSameLength(Exception):
+    """
+    :raise when sequences have different length
+    """
+    pass
+
+class notStr(Exception):
+    pass
+
 #  read dot-aln files and return the gene names in one aln file
 def aln_reader(dot_aln_file):
     """
@@ -48,9 +57,56 @@ def aln2input(dot_aln_file, hyphy_input_file):
         hyphy_input_content = [">%s\n%s\n" % (line.split()[0], line.split()[1])
                                for line in aln]
 
+
+
     with open(hyphy_input_file, "w") as Hyphy_input_writer:
         Hyphy_input_writer.writelines(hyphy_input_content)
 
+
+def aln2inputNogap(dot_aln_file, hyphy_input_file):
+    with open(dot_aln_file, "r") as aln:
+        contents = aln.readlines()
+    gene_titles = [line.split()[0].strip() for line in contents]
+    gene_sequences = [line.split()[-1].strip() for line in contents]
+
+    check_sequence_matrix(gene_sequences)
+    sequence_no_gap = remove_gaps_matrix(gene_sequences)
+
+    with open(hyphy_input_file, "w") as write_hyphy:
+        for index_i, gene_title in enumerate(gene_titles):
+            write_hyphy.write(">" + gene_title.strip() + "\n")
+            write_hyphy.write(sequence_no_gap[index_i].strip() + "\n")
+
+
+def check_sequence_matrix(sequence_matrix):
+
+    length_1 = len(sequence_matrix[0])
+
+    for line in sequence_matrix:
+        if not isinstance(line, str):
+            raise notStr
+        if not length_1 == len(line):
+            raise sequenceNotSameLength
+
+
+def remove_gaps_matrix(sequence_matrix):
+    check_sequence_matrix(sequence_matrix)
+    codon_sum = len(sequence_matrix[0])/3
+    tmp_matrix_filter = [[] for line in sequence_matrix]
+
+    # using a flipping window
+    for codon_i in range(codon_sum):
+        start_point = codon_i*3
+        end_point = start_point + 3
+        content_in_window = [line[start_point:end_point] for line in sequence_matrix]
+        # if "-" exists , reject whole window
+        if not "-" in "".join(content_in_window):
+            # no "-"
+            for index_line, line_filtered in enumerate(tmp_matrix_filter):
+                line_filtered.append(content_in_window[index_line])
+
+    sequence_matrix_filter = ["".join(line) for line in tmp_matrix_filter]
+    return sequence_matrix_filter
 
 def remove_gaps(sequence_string):
     """    remove gaps "---" in given sequence string ."""

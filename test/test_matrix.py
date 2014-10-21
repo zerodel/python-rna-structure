@@ -83,7 +83,7 @@ class MyTestCase(unittest.TestCase):
     def test_nest_export(self):
         pyMatrix.degenerate(gtr_nested_file="gu_model.mdl", gtr_mdl_file="rebuilt_gtr.mdl")
         model_your = pyMatrix.nest_export(gtr_mdl="rebuilt_gtr.mdl", gtr_nested="rna_structure.mdl", ccl_file="../50CCl.lst")
-        print len(re.findall("\*psi",model_your)), "psi in model_your"
+        print len(re.findall("\*psi", model_your)), "psi in model_your"
         self.assertTrue(os.path.exists("rna_structure.mdl"))
 
         index_codon = gc.codon_list_hypothesis

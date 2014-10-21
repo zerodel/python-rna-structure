@@ -74,9 +74,40 @@ def main3():
             writer.write("%s\t%s\n" % (str(num_gap), str(full_nt_length)))
 
 
+def gap_check_traversal(input_folder, output_file, given_sequence_file=""):
+    """
+    check gap proportion on all files in "input_folder", and export as lst file to "output_file"
+    with (optional) given_sequence_file
+
+    :param input_folder:
+    :param output_file:
+    :param given_sequence:
+    :return:
+    """
+    curdir_abs = os.path.abspath(os.curdir)
+
+    if not given_sequence_file:
+        jobids = dsh.get_gene_id_sequnce_from_lst(os.path.join(given_sequence_file))
+    else:
+        raise dsh.idSequenceUnKnow
+        #jobids = sorted([file_input for file_input in os.listdir(input_folder) if ".input" == os.path.splitext(file_input)[-1]])
+
+    with open(output_file, "w") as writer:
+        writer.write("gaps\tfull\n")
+        for jobid in jobids:
+            input_name = os.path.join(input_folder, jobid + ".input")
+            aln_name = os.path.join(input_folder, jobid + ".aln")
+            if os.path.exists(input_name):
+                num_gap, full_nt_length = gap_counting_input(input_name)
+            elif os.path.exists(aln_name):
+                num_gap, full_nt_length = gap_counting_input(aln_name)
+            else:
+                raise dsh.WrongFileTypeForGapCheck
+            writer.write("%s\t%s\n" % (str(num_gap), str(full_nt_length)))
+
+    os.chdir(curdir_abs)
+
 if __name__ == "__main__":
-    main1()
-    main2()
-    main3()
     # num_gap, length_full = gap_counting_input("tmp.input")
     # print num_gap, length_full
+    pass

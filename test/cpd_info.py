@@ -9,6 +9,12 @@ import pyRNAsnp.pyRNAsnp as RNAsnp
 import pyHYPHY.global_constants as gc
 import pyHYPHY.ModelHYPHY as pyMH
 
+def test_check_codons():
+    ccl_file = "/home/zerodel/Workspace/codon_lst"
+    mp = pyMH.ModelHYPHY(lst_2_tuple_file_name=ccl_file)
+    print str(mp.check_codons("AAC", "ACC"))
+
+
 
 def cpd_reshape_export(cpd_path, ccl_file, output_file, codon_vector=gc.codon_list_hypothesis[:]):
     cpd_main = RNAsnp.get_whole_cpd(cpd_path)
@@ -41,7 +47,13 @@ def cpd_reshape_export(cpd_path, ccl_file, output_file, codon_vector=gc.codon_li
                                                    class_mutation))
 
 if __name__ == "__main__":
-    ccl_file = "/home/zerodel/Workspace/Yeast/codon_all.lst"
-    output_file = "/home/zerodel/GitProjects/python-rna-structure/data/YeastCPDInfo.list"
-    cpdpath = "/home/zerodel/Workspace/Yeast/yeast_cpd"
-    cpd_reshape_export(cpdpath,ccl_file,output_file)
+    # ccl_file = "/home/zerodel/Workspace/Yeast/codon_all.lst"
+    # output_file = "/home/zerodel/GitProjects/python-rna-structure/data/YeastCPDInfo.list"
+    # cpdpath = "/home/zerodel/Workspace/Yeast/yeast_cpd"
+    # cpd_reshape_export(cpdpath, ccl_file, output_file)
+    print "yeast ok "
+    ccl_file_ecoli = "/home/zerodel/Workspace/codon_all.lst"
+    output_file_ecoli = "/home/zerodel/GitProjects/python-rna-structure/data/EcoliCPDInfo.list"
+    cpdpath_ecoli = "/home/zerodel/Workspace/cpd_store_site"
+    cpd_reshape_export(cpdpath_ecoli, ccl_file_ecoli, output_file_ecoli)
+    print "ecoli , ok"

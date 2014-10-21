@@ -59,6 +59,22 @@ DataSetFilter filteredData = CreateFilter (nucleotideSequences, 3, "PARTITION_DE
 HarvestFrequencies (observedFreq,filteredData,3,1,1);
 vectorOfFrequencies = BuildCodonFrequencies (observedFreq);
 
+codon_list_hypothesis =  {
+                      {"AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT", "AGA", "AGC", "AGG", "AGT", "ATA",
+                         "ATC", "ATG", "ATT", "CAA", "CAC", "CAG", "CAT", "CCA", "CCC", "CCG", "CCT", "CGA", "CGC",
+                         "CGG", "CGT", "CTA", "CTC", "CTG", "CTT", "GAA", "GAC", "GAG", "GAT", "GCA", "GCC", "GCG",
+                         "GCT", "GGA", "GGC", "GGG", "GGT", "GTA", "GTC", "GTG", "GTT", "TAC", "TAT", "TCA", "TCC",
+                         "TCG", "TCT", "TGC", "TGG", "TGT", "TTA", "TTC", "TTG", "TTT"}
+};
+
+fprintf (stdout,"\n===============================>raw \n", nucleotideSequences,"\n");
+fprintf (stdout, "\n==============================>filtered raw ,\n", filteredData,"\n");
+fprintf (stdout, "\n==============================>obf \n", observedFreq, "\n");
+
+for (i=0;i<61;i=i+1)
+{
+        fprintf (stdout, codon_list_hypothesis[0][i], "\t", vectorOfFrequencies[i][0], "\n");
+}
 
 /* define GTR model  */
 #include "CUSTOM_MODEL_FILE";

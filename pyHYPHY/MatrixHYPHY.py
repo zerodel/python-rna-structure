@@ -96,7 +96,7 @@ def nest_export(gtr_mdl, gtr_nested, ccl_file):
         line_rebuilt = ",".join(newline)  # rebuilt a line
         rebuilt_lines.append(line_rebuilt)
     model_rebuilt = "".join(rebuilt_lines)  # rebuilt a model
-
+    print psi_in_model, " psi in model"
     print end_of_line, " ends in model"
     with open(name=gtr_nested, mode="w") as model_w:
         model_w.write(model_rebuilt)

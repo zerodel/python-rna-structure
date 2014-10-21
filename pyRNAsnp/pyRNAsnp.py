@@ -16,6 +16,9 @@ except ImportError:
         import pickle
 
 
+header_mode3 = "SNP     w       Slen    GC      interval        d       pvalue1 ewin    interval        d_max   pvalue2"
+
+
 def rnasnp_extractor(rnasnp_file_name):
     """
     get the whole content of log file 
