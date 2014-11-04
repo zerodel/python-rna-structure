@@ -23,6 +23,12 @@ class SequenceTooShort(Exception):
 
 # first , check  the gene  order in all alignment files
 def check_gene_order_in_alignments(path_to_alignments):
+    """
+    判断path_to_alignment 里面所有的.aln 文件里物种名是否都是一样的.
+
+    :param path_to_alignments:
+    :return:
+    """
     # get file-names
     import os
     import os.path
@@ -56,6 +62,15 @@ def check_gene_order_in_alignments(path_to_alignments):
         raise AlignmentNotSame
 
 def paste_matrix(matrix_main, matrix_tail):
+    """
+    链接两个字符串数组.
+
+    两个字符串数组元素个数不一样, 将出现DimNotSame异常.
+
+    :param matrix_main: 被连接的字符串数组
+    :param matrix_tail: 添加在matrix_main 后面的字符串数组.
+    :return: 拼接好的字符串数组
+    """
     if not len(matrix_main) == len(matrix_tail):
         raise DimNotSame
     tmp = []
@@ -65,20 +80,27 @@ def paste_matrix(matrix_main, matrix_tail):
     return tmp
 
 
+def extract_TIR_single_file(aln_file, length_TIR, start_point=0):
+    """
+    读取aln_file,把序列start_point 开始的 length_TIR 部分提取出来.
 
-def extract_TIR_single_file(aln_file, length_TIR):
+    :param aln_file:
+    :param length_TIR:
+    :param start_point:
+    :return: 一个字符串数组.
+    """
     with open(aln_file, "r") as reader:
-        sequences = [line.split()[-1]  for line in reader.readlines()]
+        sequences = [line.split()[-1] for line in reader.readlines()]
 
-    if len(sequences[0]) < length_TIR:
+    if len(sequences[0]) < start_point+length_TIR:
         raise SequenceTooShort
 
-    matrix_TIR_raw = ["".join(line[0:length_TIR]) for line in sequences]
+    matrix_TIR_raw = ["".join(line[start_point:start_point+length_TIR]) for line in sequences]
 
     return matrix_TIR_raw
 
 
-def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR):
+def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR, start_point=0):
     # combination of all translation initiation region
 
     import os
@@ -99,7 +121,7 @@ def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR):
         # single file operation
         # rejection : 1. length not enough 2 two many gaps
         try:
-            matrix_sequence = paste_matrix(matrix_sequence,DH.remove_gaps_matrix(extract_TIR_single_file(single_aln_file, length_of_TIR)))
+            matrix_sequence = paste_matrix(matrix_sequence,DH.remove_gaps_matrix(extract_TIR_single_file(single_aln_file, length_of_TIR, start_point)))
 
         except SequenceTooShort:
             print "Too short in %s" % single_aln_file
@@ -107,17 +129,13 @@ def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR):
         except DimNotSame:
             print "Error of Dimisions %s" % single_aln_file
             continue
-
         else:
             pass
-
 
     with open(input_file_for_hyphy, "w") as writerhere:
         for indexI , gene_title in enumerate(inputfile_header):
             writerhere.write(gene_title + "\n")
             writerhere.write(matrix_sequence[indexI] + "\n")
-
-
 
     os.chdir(current_dir)
 
@@ -156,6 +174,101 @@ def make_bf_TIR():
                                       hyphy_batch_file="TIR%dnest.bf" % length_window,
                                       hyphy_result_file="TIR%dnest.result" % length_window)
 
+def sliding_window():
+    workpath = "d:\Workspace\Ecoli\slidingWindow"
+    os.chdir(workpath)
+    model_gtr = "rebuild_model.mdl"
+    model_nest = "rna_full_length_structure.mdl"
+
+    bf_maker_nest = BfH.HYPHYBatchFile(species_name="ecoli",
+                                      model_file=model_nest,
+                                      bf_template_file="templateNoGap")
+    bf_maker_gtr = BfH.HYPHYBatchFile(species_name="ecoli",
+                                      model_file=model_gtr,
+                                      bf_template_file="templateNoGap")
+
+    bf_maker_gtr.set_tree_from_outside(SS.ecoli())
+    bf_maker_nest.set_tree_from_outside(SS.ecoli())
+
+    step_num = 15
+    step_width_step = 5
+    window_width_min = 30
+    site_start_point = 0
+    site_shift_step = 5
+    for window_start_offset in range(step_num):
+        for window_width_offset in range(step_num):
+
+            start_site = site_shift_step*window_start_offset + site_start_point
+            length_window = step_width_step*window_width_offset + window_width_min
+            aln_files = "d:\Workspace\Ecoli\ecoli_10_species"
+
+            # extracted_input_file = workpath + "\TIR" + str(length_window) + ".input"
+            job_description = "w%ds%d" % (length_window, start_site)
+            extracted_input_file = "%s\\TIR%s.input" % (workpath, job_description)
+            print extracted_input_file
+
+            gene_conjunction(aln_files, extracted_input_file, length_window, start_site)
+
+            bf_maker_gtr.write_batch_file(dot_input="TIR%s.input" % job_description,
+                                          dot_aln="",
+                                          hyphy_batch_file="TIR%sgtr.bf" % job_description,
+                                          hyphy_result_file="TIR%sgtr.result" % job_description)
+
+            bf_maker_nest.write_batch_file(dot_input="TIR%s.input" % job_description,
+                                           dot_aln="",
+                                          hyphy_batch_file="TIR%snest.bf" % job_description,
+                                          hyphy_result_file="TIR%snest.result" % job_description)
+
+
+def make_bf_p2():
+    workpath = "d:\Workspace\Ecoli\P2"
+    os.chdir(workpath)
+    model_gtr = "rebuild_model.mdl"
+    model_nest = "rna_full_length_structure.mdl"
+
+    bf_maker_gtr = BfH.HYPHYBatchFile(species_name="ecoli",
+                                      model_file=model_gtr,
+                                      bf_template_file="templateNoGap")
+
+    bf_maker_nest = BfH.HYPHYBatchFile(species_name="ecoli",
+                                      model_file=model_nest,
+                                      bf_template_file="templateNoGap")
+
+    bf_maker_gtr.set_tree_from_outside(SS.ecoli())
+    bf_maker_nest.set_tree_from_outside(SS.ecoli())
+
+    aln_file_folder = "d:\Workspace\Ecoli\ecoli_10_species"
+
+    aln_files = [file_single for file_single in os.listdir(aln_file_folder) if ".aln" == os.path.splitext(file_single)[-1]]
+
+
+    for single_aln in aln_files:
+        aln_full_path = os.path.join(aln_file_folder, single_aln)
+        genes, lengths = DH.aln_info(aln_full_path)
+        gene_full_length = lengths[0]
+        jobid = single_aln.split(".")[0]
+        input_file_name = "%s.input" % jobid
+        DH.aln2input(aln_full_path, input_file_name)
+
+        if gene_full_length < 52:
+            print "%s too short ---" % single_aln
+            continue
+
+        bf_maker_gtr.set_partition(51, gene_full_length)
+        bf_maker_nest.set_partition(51, gene_full_length)
+
+        bf_maker_gtr.write_batch_file(dot_input=input_file_name,
+                                      dot_aln="",
+                                      hyphy_batch_file="%sp2gtr.bf" % jobid,
+                                      hyphy_result_file="%sp2gtr.result" % jobid)
+
+
+        bf_maker_nest.write_batch_file(dot_input=input_file_name,
+                                      dot_aln="",
+                                      hyphy_batch_file="%sp2nest.bf" % jobid,
+                                      hyphy_result_file="%sp2nest.result" % jobid)
+
+
 
 if __name__ == "__main__":
-    make_bf_TIR()
+    make_bf_p2()
