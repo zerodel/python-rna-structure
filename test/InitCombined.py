@@ -61,6 +61,7 @@ def check_gene_order_in_alignments(path_to_alignments):
     else:
         raise AlignmentNotSame
 
+
 def paste_matrix(matrix_main, matrix_tail):
     """
     链接两个字符串数组.
@@ -100,7 +101,7 @@ def extract_TIR_single_file(aln_file, length_TIR, start_point=0):
     return matrix_TIR_raw
 
 
-def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR, start_point=0):
+def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR, start_point=0, remove_gap=True):
     # combination of all translation initiation region
 
     import os
@@ -115,13 +116,17 @@ def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR, start_p
     aln_files = [single_file for single_file in os.listdir(path_aln_file)
                  if ".aln" == os.path.splitext(single_file)[-1]]
 
-
-
     for single_aln_file in aln_files:
         # single file operation
-        # rejection : 1. length not enough 2 two many gaps
+        # rejection : 1. length not enough 2 two many  gaps
         try:
-            matrix_sequence = paste_matrix(matrix_sequence,DH.remove_gaps_matrix(extract_TIR_single_file(single_aln_file, length_of_TIR, start_point)))
+
+            if remove_gap:
+                gene_seq_matrix_addition = DH.remove_gaps_matrix(extract_TIR_single_file(single_aln_file, length_of_TIR, start_point))
+            else:
+                gene_seq_matrix_addition = extract_TIR_single_file(single_aln_file, length_of_TIR, start_point)
+
+            matrix_sequence = paste_matrix(matrix_sequence, gene_seq_matrix_addition)
 
         except SequenceTooShort:
             print "Too short in %s" % single_aln_file
@@ -133,7 +138,8 @@ def gene_conjunction(path_aln_file, input_file_for_hyphy, length_of_TIR, start_p
             pass
 
     with open(input_file_for_hyphy, "w") as writerhere:
-        for indexI , gene_title in enumerate(inputfile_header):
+        print "input file : %s in %s" % (input_file_for_hyphy, os.path.abspath(os.curdir))
+        for indexI, gene_title in enumerate(inputfile_header):
             writerhere.write(gene_title + "\n")
             writerhere.write(matrix_sequence[indexI] + "\n")
 
@@ -146,16 +152,14 @@ def make_bf_TIR():
     model_nest = "rna_full_length_structure.mdl"
 
     bf_maker_nest = BfH.HYPHYBatchFile(species_name="ecoli",
-                                      model_file=model_nest,
-                                      bf_template_file="templateNoGap")
+                                       model_file=model_nest,
+                                       bf_template_file="templateNoGap")
     bf_maker_gtr = BfH.HYPHYBatchFile(species_name="ecoli",
                                       model_file=model_gtr,
                                       bf_template_file="templateNoGap")
 
-
     bf_maker_gtr.set_tree_from_outside(SS.ecoli())
     bf_maker_nest.set_tree_from_outside(SS.ecoli())
-
 
     for window_width_offset in range(15):
         length_window = 30 + 5*window_width_offset
@@ -171,53 +175,8 @@ def make_bf_TIR():
 
         bf_maker_nest.write_batch_file(dot_input="TIR%d.input" % length_window,
                                        dot_aln="",
-                                      hyphy_batch_file="TIR%dnest.bf" % length_window,
-                                      hyphy_result_file="TIR%dnest.result" % length_window)
-
-def sliding_window():
-    workpath = "d:\Workspace\Ecoli\slidingWindow"
-    os.chdir(workpath)
-    model_gtr = "rebuild_model.mdl"
-    model_nest = "rna_full_length_structure.mdl"
-
-    bf_maker_nest = BfH.HYPHYBatchFile(species_name="ecoli",
-                                      model_file=model_nest,
-                                      bf_template_file="templateNoGap")
-    bf_maker_gtr = BfH.HYPHYBatchFile(species_name="ecoli",
-                                      model_file=model_gtr,
-                                      bf_template_file="templateNoGap")
-
-    bf_maker_gtr.set_tree_from_outside(SS.ecoli())
-    bf_maker_nest.set_tree_from_outside(SS.ecoli())
-
-    step_num = 15
-    step_width_step = 5
-    window_width_min = 30
-    site_start_point = 0
-    site_shift_step = 5
-    for window_start_offset in range(step_num):
-        for window_width_offset in range(step_num):
-
-            start_site = site_shift_step*window_start_offset + site_start_point
-            length_window = step_width_step*window_width_offset + window_width_min
-            aln_files = "d:\Workspace\Ecoli\ecoli_10_species"
-
-            # extracted_input_file = workpath + "\TIR" + str(length_window) + ".input"
-            job_description = "w%ds%d" % (length_window, start_site)
-            extracted_input_file = "%s\\TIR%s.input" % (workpath, job_description)
-            print extracted_input_file
-
-            gene_conjunction(aln_files, extracted_input_file, length_window, start_site)
-
-            bf_maker_gtr.write_batch_file(dot_input="TIR%s.input" % job_description,
-                                          dot_aln="",
-                                          hyphy_batch_file="TIR%sgtr.bf" % job_description,
-                                          hyphy_result_file="TIR%sgtr.result" % job_description)
-
-            bf_maker_nest.write_batch_file(dot_input="TIR%s.input" % job_description,
-                                           dot_aln="",
-                                          hyphy_batch_file="TIR%snest.bf" % job_description,
-                                          hyphy_result_file="TIR%snest.result" % job_description)
+                                       hyphy_batch_file="TIR%dnest.bf" % length_window,
+                                       hyphy_result_file="TIR%dnest.result" % length_window)
 
 
 def make_bf_p2():
@@ -231,8 +190,8 @@ def make_bf_p2():
                                       bf_template_file="templateNoGap")
 
     bf_maker_nest = BfH.HYPHYBatchFile(species_name="ecoli",
-                                      model_file=model_nest,
-                                      bf_template_file="templateNoGap")
+                                       model_file=model_nest,
+                                       bf_template_file="templateNoGap")
 
     bf_maker_gtr.set_tree_from_outside(SS.ecoli())
     bf_maker_nest.set_tree_from_outside(SS.ecoli())
@@ -240,7 +199,6 @@ def make_bf_p2():
     aln_file_folder = "d:\Workspace\Ecoli\ecoli_10_species"
 
     aln_files = [file_single for file_single in os.listdir(aln_file_folder) if ".aln" == os.path.splitext(file_single)[-1]]
-
 
     for single_aln in aln_files:
         aln_full_path = os.path.join(aln_file_folder, single_aln)
@@ -264,11 +222,77 @@ def make_bf_p2():
 
 
         bf_maker_nest.write_batch_file(dot_input=input_file_name,
-                                      dot_aln="",
-                                      hyphy_batch_file="%sp2nest.bf" % jobid,
-                                      hyphy_result_file="%sp2nest.result" % jobid)
+                                       dot_aln="",
+                                       hyphy_batch_file="%sp2nest.bf" % jobid,
+                                       hyphy_result_file="%sp2nest.result" % jobid)
 
+
+def sliding_window():
+    workpath = "/Users/zerodel/WorkSpace/test/test_slidingWindow"
+
+    # important here, has changed path.
+    os.chdir(workpath)
+    model_gtr = "rebuild_model.mdl"
+    model_nest = "rna_full_length_structure.mdl"
+    aln_files = "/Users/zerodel/WorkSpace/ecoli_aln"
+
+    bf_maker_nest = BfH.HYPHYBatchFile(species_name="ecoli",
+                                       model_file=model_nest,
+                                       bf_template_file="templateNoGap")
+    bf_maker_gtr = BfH.HYPHYBatchFile(species_name="ecoli",
+                                      model_file=model_gtr,
+                                      bf_template_file="templateNoGap")
+
+    bf_maker_gtr.set_tree_from_outside(SS.ecoli())
+    bf_maker_nest.set_tree_from_outside(SS.ecoli())
+
+    step_num = 21
+    step_width_step = 15
+    window_width_min = 30
+    site_start_point = 0
+    site_shift_step = 15
+
+    window_axis = [0,2]
+    start_axis = range(step_num)
+
+    for window_width_offset in window_axis:
+        for window_start_offset in start_axis:
+
+            start_site = site_shift_step*window_start_offset + site_start_point
+            length_window = step_width_step*window_width_offset + window_width_min
+
+            # extracted_input_file = workpath + "\TIR" + str(length_window) + ".input"
+            job_description = "w%ds%d" % (length_window, start_site)
+            extracted_input_file = "TIR%s.input" % job_description
+            extracted_input_no_gap = "TIR%sN.input" % job_description
+
+            gene_conjunction(aln_files, os.path.join(workpath, extracted_input_file), length_window, start_site)
+            gene_conjunction(aln_files, os.path.join(workpath, extracted_input_no_gap), length_window, start_site, False)
+
+
+            bf_maker_gtr.write_batch_file(dot_input=extracted_input_file,
+                                          dot_aln="",
+                                          hyphy_batch_file="TIR%sgtr.bf" % job_description,
+                                          hyphy_result_file="TIR%sgtr.result" % job_description)
+
+            bf_maker_nest.write_batch_file(dot_input=extracted_input_file,
+                                           dot_aln="",
+                                           hyphy_batch_file="TIR%snest.bf" % job_description,
+                                           hyphy_result_file="TIR%snest.result" % job_description)
+
+
+
+                # no gap
+            bf_maker_gtr.write_batch_file(dot_input=extracted_input_no_gap,
+                                          dot_aln="",
+                                          hyphy_batch_file="TIR%sgtrN.bf" % job_description,
+                                          hyphy_result_file="TIR%sgtrN.result" % job_description)
+
+            bf_maker_nest.write_batch_file(dot_input=extracted_input_no_gap,
+                                           dot_aln="",
+                                           hyphy_batch_file="TIR%snestN.bf" % job_description,
+                                           hyphy_result_file="TIR%snestN.result" % job_description)
 
 
 if __name__ == "__main__":
-    make_bf_p2()
+    sliding_window()

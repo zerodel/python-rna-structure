@@ -10,6 +10,14 @@ __author__ = 'zerodel'
 
 # 2014年10月29日， 现在mac 上git 下来的代码不是最新的，但是这些参数不变， 不影响操作。
 
+models = ["gtr", "nest"]
+np = {"gtr":7, "nest":8}
+step_num = 20
+step_width_step = 3
+site_shift_step = 3
+
+site_start_point = 0
+window_width_min = 30
 
 class SomeError(Exception):
     """ to indicate where an error occurs
@@ -17,13 +25,15 @@ class SomeError(Exception):
     pass
 
 
-def export_parameter(result_folder, parameter_name, output_file):
+def export_parameter(result_folder, parameter_name, output_file, result_file_pattern="*.result"):
 
     current_dir = os.path.abspath(os.curdir)
     os.chdir(result_folder)
-    ord_string = "grep -i %s *.result > %s" % (parameter_name, output_file)
+    ord_string = "grep -i %s %s > %s" % (parameter_name,result_file_pattern, output_file)
+    print ord_string
     os.system(ord_string)
     os.chdir(current_dir)
+
 
 
 def input_file_info(dot_input_file_name):
@@ -44,14 +54,6 @@ def input_file_info(dot_input_file_name):
     # if no error happens , it will return a interger showing the length of sequence in this .input file 
     return length_seq
 
-models = ["gtr", "nest"]
-np = {"gtr":7, "nest":8}
-step_num = 20
-step_width_step = 3
-site_shift_step = 3
-
-site_start_point = 0
-window_width_min = 30
 
 def export_length(result_path,output_path):
     with open(os.path.join(output_path, "seqLen.lst"), "w") as seq_len_table:
@@ -121,7 +123,7 @@ def clean_for_r_1(raw_file, output_path):
                     # bic calculation
                     likelihood = float(likelihood_this_window)
                     np_model = np[modelname]
-                    length_seq = input_file_info(os.path.join(result_path, "TIR%s.input" % window_description))
+                    length_seq = input_file_info(os.path.join(result_path_nogap, "TIR%s.input" % window_description))
                     bic = np_model*log(length_seq) - 2.0*likelihood
                     bic_same_start_site.append(str(bic).strip())
 
@@ -133,7 +135,16 @@ def clean_for_r_1(raw_file, output_path):
             writer_BIC.close()
             writer_ML.close()
 
-def clean_for_r_other(raw_result_path, output_path, parameter_wanted):
+def clean_for_r_other(raw_result_path, output_path, parameter_wanted, pattern_output="w%ds%d%s"):
+    step_num = 21
+    step_width_step = 15
+    window_width_min = 30
+    site_start_point = 0
+    site_shift_step = 15
+
+    window_axis = [0, 2]
+    start_axis = range(step_num)
+
     lst_file_name_para = os.path.join(output_path, "%s.lst" % parameter_wanted)
     export_parameter(raw_result_path, parameter_wanted, lst_file_name_para)
 
@@ -144,25 +155,37 @@ def clean_for_r_other(raw_result_path, output_path, parameter_wanted):
         writer_ML = open(os.path.join(output_path, "%s%s.lst" % (modelname, parameter_wanted)), "w")
 
         window_width_table_head = [str(step_width_step*single_offset + window_width_min)
-                                   for single_offset in range(step_num)]
+                                   for single_offset in window_axis]
 
         table_head = "start_site/windowWidth\t" + "\t".join(window_width_table_head) + "\n"
 
         try:
             writer_ML.write(table_head)
 
-            for window_start_offset in range(step_num):
+
+            for window_start_offset in start_axis:
                 ml_same_start_site = []
                 start_site = site_shift_step*window_start_offset + site_start_point
-                for window_width_offset in range(step_num):
+                for window_width_offset in window_axis:
 
                     length_window = step_width_step*window_width_offset + window_width_min
 
                     site_string = "s%d" % start_site
                     length_string = "w%d" % length_window
                     window_description = "w%ds%d" % (length_window, start_site)
-                    job_description = "w%ds%d%s" % (length_window, start_site, modelname)
-                    para_needed = [line.strip().split("=")[-1] for line in contents if job_description in line]
+
+                    job_description = pattern_output % (length_window, start_site, modelname)
+
+                    # data grab
+                    # para_needed = [line.strip().split("=")[-1] for line in contents if job_description in line]
+                    para_needed = []
+                    for line in contents:
+                        if job_description in line and "=" in line:
+                            para_needed.append(line.strip().split("=")[-1])
+
+                        if job_description in line and "AIC" in line:
+                            para_needed.append(line.strip().split()[-1])
+
                     if not len(para_needed) == 1:
                         print site_string, "\t", length_string, "\t", modelname
                         print str(para_needed)
@@ -180,12 +203,15 @@ def clean_for_r_other(raw_result_path, output_path, parameter_wanted):
             writer_ML.close()
 
 if __name__ == "__main__":
-    result_path = "/Users/zerodel/WorkSpace/slidingWindow3"
+    result_path_nogap = "/Users/zerodel/WorkSpace/sliding300/nogap"
     parameter_wanted = "likelihood"
-    output_folder = "/Users/zerodel/WorkSpace/sWAnalysis"
-    output_file_likelihood = os.path.join(output_folder, "sWLikelihood3.lst")
-    # export_parameter(result_path, parameter_wanted, output_file_likelihood)
-    # clean_for_r_1(output_file_likelihood, output_folder)
-    # clean_for_r_other(result_path, output_folder, "w")
-    #clean_for_r_other(result_path, output_folder, "psi")
-    export_length(result_path, output_folder)
+    output_folder = "/Users/zerodel/WorkSpace/sWAnalysis/300/nogap"
+    output_file_likelihood = os.path.join(output_folder, "lnL.lst")
+    #export_parameter(result_path_nogap, parameter_wanted, output_file_likelihood)
+    clean_for_r_other(result_path_nogap, output_folder, "aic")
+    #
+    result_path_gap = "/Users/zerodel/WorkSpace/sliding300/gap"
+    output_folder_gap = "/Users/zerodel/WorkSpace/sWAnalysis/300/gap"
+    output_file_likelihood = os.path.join(output_folder_gap, "lnL.lst")
+    # export_parameter(result_path, parameter_wanted, output_file_likelihood, "*N.result")
+    clean_for_r_other(result_path_gap, output_folder_gap, "aic")
