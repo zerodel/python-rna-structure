@@ -12,12 +12,15 @@ __author__ = 'zerodel'
 
 models = ["gtr", "nest"]
 np = {"gtr":7, "nest":8}
-step_num = 20
-step_width_step = 3
-site_shift_step = 3
 
-site_start_point = 0
+step_num = 21
+step_width_step = 15
 window_width_min = 30
+site_start_point = 0
+site_shift_step = 15
+
+window_axis = [0, 2]
+start_axis = range(step_num)
 
 class SomeError(Exception):
     """ to indicate where an error occurs
@@ -76,7 +79,7 @@ def export_length(result_path,output_path):
             seq_len_table.write("\t".join(len_seq_input) + "\n")
 
 
-def clean_for_r_1(raw_file, output_path):
+def clean_for_r_1(result_file_path, raw_file, output_path):
     """ data clean for HYPHY results , and prepared for R visualization
 """
     # do some data clean for R
@@ -89,20 +92,22 @@ def clean_for_r_1(raw_file, output_path):
         writer_ML = open(os.path.join(output_path, "%sML.lst" % modelname), "w")
         writer_BIC= open(os.path.join(output_path, "%sBIC.lst" % modelname), "w")
 
+
         window_width_table_head = [str(step_width_step*single_offset + window_width_min)
-                                   for single_offset in range(step_num)]
+                                   for single_offset in window_axis]
 
         table_head = "start_site/windowWidth\t" + "\t".join(window_width_table_head) + "\n"
 
+        
         try:
             writer_ML.write(table_head)
             writer_BIC.write(table_head)
 
-            for window_start_offset in range(step_num):
+            for window_start_offset in start_axis:
                 ml_same_start_site = []
                 bic_same_start_site = []
                 start_site = site_shift_step*window_start_offset + site_start_point
-                for window_width_offset in range(step_num):
+                for window_width_offset in window_axis:
 
                     length_window = step_width_step*window_width_offset + window_width_min
 
@@ -123,7 +128,7 @@ def clean_for_r_1(raw_file, output_path):
                     # bic calculation
                     likelihood = float(likelihood_this_window)
                     np_model = np[modelname]
-                    length_seq = input_file_info(os.path.join(result_path_nogap, "TIR%s.input" % window_description))
+                    length_seq = input_file_info(os.path.join(result_file_path, "TIR%sN.input" % window_description))
                     bic = np_model*log(length_seq) - 2.0*likelihood
                     bic_same_start_site.append(str(bic).strip())
 
@@ -172,8 +177,6 @@ def clean_for_r_other(raw_result_path, output_path, parameter_wanted, pattern_ou
 
                     site_string = "s%d" % start_site
                     length_string = "w%d" % length_window
-                    window_description = "w%ds%d" % (length_window, start_site)
-
                     job_description = pattern_output % (length_window, start_site, modelname)
 
                     # data grab
@@ -195,23 +198,23 @@ def clean_for_r_other(raw_result_path, output_path, parameter_wanted, pattern_ou
                     para_this_window = para_needed[0].strip()
                     ml_same_start_site.append(para_this_window)
                 writer_ML.write(str(start_site) + "\t" + "\t".join(ml_same_start_site) + "\n")
-        except SomeError,e:
+        except SomeError, ex_e:
             print "model name: %s\t w:%d \t s:%d has no parameter named : %s" % (modelname, length_window, start_site, parameter_wanted)
+            print str(ex_e)
             continue
 
         finally:
             writer_ML.close()
 
 if __name__ == "__main__":
-    result_path_nogap = "/Users/zerodel/WorkSpace/sliding300/nogap"
-    parameter_wanted = "likelihood"
-    output_folder = "/Users/zerodel/WorkSpace/sWAnalysis/300/nogap"
-    output_file_likelihood = os.path.join(output_folder, "lnL.lst")
-    #export_parameter(result_path_nogap, parameter_wanted, output_file_likelihood)
-    clean_for_r_other(result_path_nogap, output_folder, "aic")
-    #
+    # result_path_nogap = "/Users/zerodel/WorkSpace/sliding300/nogap"
+    # parameter_wanted = "likelihood"
+    # output_folder = "/Users/zerodel/WorkSpace/sWAnalysis/300/nogap"
+    # output_file_likelihood = os.path.join(output_folder, "lnL.lst")
+    # #export_parameter(result_path_nogap, parameter_wanted, output_file_likelihood)
+    # clean_for_r_other(result_path_nogap, output_folder, "aic")
+    # #
     result_path_gap = "/Users/zerodel/WorkSpace/sliding300/gap"
     output_folder_gap = "/Users/zerodel/WorkSpace/sWAnalysis/300/gap"
     output_file_likelihood = os.path.join(output_folder_gap, "lnL.lst")
-    # export_parameter(result_path, parameter_wanted, output_file_likelihood, "*N.result")
-    clean_for_r_other(result_path_gap, output_folder_gap, "aic")
+    clean_for_r_1(result_path_gap, output_file_likelihood, output_folder_gap)
