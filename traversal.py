@@ -14,4 +14,4 @@ def hyphy_traversal():
 
 
 if __name__ == "__main__":
-	hyphy_traversal()
+    hyphy_traversal()
